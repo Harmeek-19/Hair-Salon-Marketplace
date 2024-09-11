@@ -1,5 +1,6 @@
 # Hair Salon Management System API
 
+
 ## Table of Contents
 1. [Project Overview](#project-overview)
 2. [Technology Stack](#technology-stack)
@@ -16,16 +17,22 @@
 13. [Geolocation Features](#geolocation-features)
 14. [Email Notifications](#email-notifications)
 15. [Admin Dashboard](#admin-dashboard)
-16. [Testing](#testing)
-17. [Deployment](#deployment)
-18. [Contributing](#contributing)
-19. [Troubleshooting](#troubleshooting)
-20. [License](#license)
+16. [Favorites System](#favorites-system)
+17. [Chain Salon Management](#chain-salon-management)
+18. [City Validation](#city-validation)
+19. [Stylist Rating](#stylist-rating)
+20. [Testing](#testing)
+21. [Deployment](#deployment)
+22. [Contributing](#contributing)
+23. [Troubleshooting](#troubleshooting)
+24. [License](#license)
 
 ## Project Overview
-This project is a comprehensive backend API for a Hair Salon Management System. It provides functionality for managing salons, stylists, appointments, services, and user accounts. The system includes features such as geolocation-based salon search, appointment booking, review system, and an admin dashboard.
+
+This project is a comprehensive backend API for a Hair Salon Management System. It provides functionality for managing salons, stylists, appointments, services, and user accounts. The system includes features such as geolocation-based salon search, appointment booking, review system, favorites system, chain salon management, city validation, stylist rating, and an admin dashboard.
 
 ## Technology Stack
+
 - Python 3.8+
 - Django 5.0.7
 - Django REST Framework
@@ -34,6 +41,7 @@ This project is a comprehensive backend API for a Hair Salon Management System. 
 - JWT for authentication
 
 ## Project Structure
+
 ```
 hairsalon_backend/
 │
@@ -100,6 +108,7 @@ hairsalon_backend/
 ```
 
 ## Setup and Installation
+
 1. Clone the repository:
    ```
    git clone https://github.com/your-username/hairsalon-backend.git
@@ -115,10 +124,12 @@ hairsalon_backend/
 3. Install dependencies:
    ```
    pip install -r requirements.txt
-   For windows an issue might arise with the gdal library which can be solved by using this command:
-   #this is the method that's working
-   # curl -L -o GDAL-312-amd64 https://github.com/cgohlke/geospatial-wheels/releases/download/v2024.2.18/GDAL-3.8.4-cp312-cp312-win_amd64.whl 
-   # pip install GDAL-3.8.4-cp312-cp312-win_amd64.whl)
+   ```
+
+   For Windows, if you encounter issues with the GDAL library, use this command:
+   ```
+   curl -L -o GDAL-312-amd64 https://github.com/cgohlke/geospatial-wheels/releases/download/v2024.2.18/GDAL-3.8.4-cp312-cp312-win_amd64.whl 
+   pip install GDAL-3.8.4-cp312-cp312-win_amd64.whl
    ```
 
 4. Run migrations:
@@ -133,6 +144,7 @@ hairsalon_backend/
    ```
 
 ## Database Configuration
+
 The project uses SQLite for development. For production, it's recommended to use PostgreSQL. To configure PostgreSQL:
 
 1. Install PostgreSQL and create a database
@@ -151,6 +163,7 @@ The project uses SQLite for development. For production, it's recommended to use
    ```
 
 ## Environment Variables
+
 Create a `.env` file in the project root and add the following:
 ```
 SECRET_KEY=your_secret_key
@@ -162,12 +175,12 @@ EMAIL_HOST_PASSWORD=your_email_password
 ```
 
 ## Running the Server
+
 ```
 python manage.py runserver
 ```
 
 ## API Endpoints
-Detailed list of all API endpoints, their methods, and brief descriptions.
 
 ### Authentication
 - Register: `POST /auth/register/`
@@ -182,12 +195,15 @@ Detailed list of all API endpoints, their methods, and brief descriptions.
 - Top Rated: `GET /api/salons/top-rated/`
 - Nearby: `GET /api/salons/nearby/?lat=<latitude>&lon=<longitude>`
 - Analytics: `GET /api/salons/<id>/analytics/`
+- Favorite/Unfavorite: `POST /api/salons/<id>/favorite/`
 
 ### Stylists
 - List/Create: `GET/POST /api/stylists/`
 - Retrieve/Update/Delete: `GET/PUT/PATCH/DELETE /api/stylists/<id>/`
 - Appointments: `GET /api/stylists/<id>/appointments/`
 - Available Slots: `GET /api/stylists/<id>/available_slots/?date=<date>`
+- Favorite/Unfavorite: `POST /api/stylists/<id>/favorite/`
+- Rate Stylist: `POST /api/stylists/<id>/rate/`
 
 ### Services
 - List/Create: `GET/POST /api/services/`
@@ -216,40 +232,162 @@ Detailed list of all API endpoints, their methods, and brief descriptions.
 - Stylist Report: `GET /api/reports/stylist_report/`
 - Appointment Report: `GET /api/reports/appointment_report/`
 
+### Favorites
+- List User's Favorites: `GET /api/favorites/`
+
 ## Authentication
+
 The project uses JWT (JSON Web Tokens) for authentication. Include the token in the Authorization header:
 ```
 Authorization: Bearer <your_token>
 ```
 
 ## Models
-Brief description of main models (Salon, Stylist, Service, Appointment, User, etc.)
+
+### Salon
+- name: CharField
+- address: CharField
+- city: CharField
+- phone: CharField
+- email: EmailField
+- description: TextField
+- is_chain: BooleanField
+- chain_name: CharField (optional)
+- latitude: FloatField
+- longitude: FloatField
+- rating: FloatField
+
+### Stylist
+- name: CharField
+- email: EmailField
+- phone: CharField
+- specialties: CharField
+- salon: ForeignKey to Salon
+- years_of_experience: IntegerField
+- average_rating: FloatField
+- total_ratings: IntegerField
+
+### Service
+- name: CharField
+- description: TextField
+- price: DecimalField
+- duration: IntegerField
+- salon: ForeignKey to Salon
+
+### Appointment
+- customer: ForeignKey to User
+- stylist: ForeignKey to Stylist
+- salon: ForeignKey to Salon
+- services: ManyToManyField to Service
+- date: DateField
+- start_time: TimeField
+- end_time: TimeField
+- status: CharField (choices: BOOKED, CONFIRMED, CANCELLED, COMPLETED)
+- total_price: DecimalField
+
+### Favorite
+- user: ForeignKey to User
+- salon: ForeignKey to Salon (optional)
+- stylist: ForeignKey to Stylist (optional)
+- created_at: DateTimeField
+
+### StylistRating
+- user: ForeignKey to User
+- stylist: ForeignKey to Stylist
+- rating: IntegerField
+- comment: TextField
+- created_at: DateTimeField
 
 ## Permissions
-Explanation of custom permissions (IsSalonOwner, IsAdminUser, etc.)
+
+The project uses custom permissions to control access to different parts of the API:
+- IsSalonOwner: Allows salon owners to manage their own salons
+- IsAdminUser: Allows admin users full access
+- IsStylist: Allows stylists to manage their own profiles and appointments
+- IsCustomer: Allows customers to book appointments and leave reviews
 
 ## Search Functionality
-Details on how the search feature works across different models.
+
+The API provides advanced search capabilities for salons and stylists:
+- Search by name, description, services, and city
+- Filter by various criteria such as rating, price range, and availability
+- Sort results by relevance, rating, or distance (when geolocation is provided)
 
 ## Geolocation Features
-Explanation of how nearby salon search works.
+
+The API supports geolocation-based queries:
+- Find nearby salons based on user's latitude and longitude
+- Sort search results by distance from a given location
 
 ## Email Notifications
-Description of when and how email notifications are sent.
+
+The system sends email notifications for various events:
+- Appointment confirmation and reminders
+- Password reset requests
+- Account activation
 
 ## Admin Dashboard
-Overview of the admin dashboard features.
+
+The admin dashboard provides an overview of the system and allows administrators to:
+- View and manage salons, stylists, and users
+- Generate reports on appointments, revenue, and user activity
+- Manage system-wide settings and configurations
+
+## Favorites System
+
+Users can mark salons and stylists as favorites:
+- Add/remove salons and stylists from favorites
+- View a list of favorite salons and stylists
+- Receive notifications about promotions or availability of favorite salons/stylists
+
+## Chain Salon Management
+
+The system supports management of salon chains:
+- Create multiple salons with the same name in different cities
+- Group analytics and reports for chain salons
+- Apply chain-wide promotions and policies
+
+## City Validation
+
+Salon registration is restricted to a predefined list of the top 500 cities in India:
+- Prevents registration of salons in non-existent or very small locations
+- Ensures data quality and improves search functionality
+- Easily expandable to include more cities as needed
+
+## Stylist Rating
+
+Users can rate and review stylists:
+- Rate stylists on a scale of 1 to 5
+- Leave text reviews for stylists
+- View average ratings and read reviews for stylists
+- Sort and filter stylists based on their ratings
 
 ## Testing
-Instructions for running tests:
 
+To run the test suite:
+```
 python manage.py test
+```
 
+To test the new features:
+1. Test favoriting salons and stylists
+2. Attempt to register salons in both valid and invalid cities
+3. Try creating chain salons with the same name in different cities
+4. Rate stylists and check if the average rating updates correctly
 
 ## Deployment
-Guidelines for deploying to production (e.g., using Heroku, AWS, etc.)
+
+Guidelines for deploying to production:
+1. Set DEBUG=False in settings.py
+2. Configure a production-ready database (e.g., PostgreSQL)
+3. Set up a reverse proxy (e.g., Nginx) and WSGI server (e.g., Gunicorn)
+4. Use environment variables for sensitive information
+5. Set up SSL/TLS for secure connections
+6. Configure static file serving
+7. Set up regular backups
 
 ## Contributing
+
 1. Fork the repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
@@ -257,7 +395,14 @@ Guidelines for deploying to production (e.g., using Heroku, AWS, etc.)
 5. Open a Pull Request
 
 ## Troubleshooting
-Common issues and their solutions.
+
+- If you encounter database migration issues, try resetting migrations
+- For GDAL-related issues on Windows, refer to the installation instructions in the Setup section
+- If email notifications are not working, check your email server settings and firewall configurations
 
 ## License
+
 This project is licensed under the MIT License.
+```
+
+This version should display correctly on GitHub with proper formatting for headers, code blocks, and lists.
